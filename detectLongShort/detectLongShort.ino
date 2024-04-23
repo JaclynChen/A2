@@ -3,7 +3,9 @@ int buttonState = HIGH;     // the current reading from the input pin
 int lastButtonState = HIGH; // the previous reading from the input pin
 
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
-unsigned long debounceDelay = 100;    // the debounce time; increase if the output flickers
+unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
+
+unsigned long pressedTime = 0;
 
 bool buttonPressed = false;
 bool buttonReleased = false;
@@ -33,15 +35,24 @@ void loop() {
 
       // if the button is pressed
       if (buttonState == LOW) {
+        pressedTime = millis();
         buttonPressed = true;
         longPressDetected = false;
       } else {
         buttonReleased = true;
 
-         Serial.print("Button released: ");
-  Serial.println(millis() - lastDebounceTime);
+         // Serial.print("Button released: ");
+        // Serial.print(millis());
+         //Serial.print(",");
+         //Serial.print(lastDebounceTime);
+         //Serial.print(",");
+ // Serial.println(millis() - lastDebounceTime);
 
-        if ((millis() - lastDebounceTime) > 500) { // Detect long press (1 second)
+        // if ((millis() - lastDebounceTime) > 500) { // Detect long press (1 second)
+        //   longPressDetected = true;
+        // }
+
+         if ((millis() - pressedTime) > 500) { // Detect long press (1 second)
           longPressDetected = true;
         }
       }
@@ -62,8 +73,8 @@ void loop() {
       Serial.println("-");
       longPressDetected = false;
     } else {
-      Serial.print("longPressState is: ");
-      Serial.print(longPressDetected);
+      // Serial.print("longPressState is: ");
+      // Serial.print(longPressDetected);
       Serial.println(" .");
 
     }
