@@ -17,22 +17,27 @@ const int sendButtonPin = 10;
 int sendButtonState = HIGH;
 int sendLastButtonState = HIGH;
 unsigned long sendLastDebounceTime = 0;
-
 // if false: mode is to confirm
 // if true: mode is to send
 bool sendMsg = true;
+
+const int clearButtonPin = 9;
+int clearButtonState = HIGH;
+int clearLastButtonState = HIGH;
+unsigned long clearLastDebounceTime = 0;
 
 
 void setup() {
   pinMode(buttonPin, INPUT_PULLUP); // set up the button pin as input with internal pull-up resistor
   pinMode(sendButtonPin, INPUT_PULLUP);
+  pinMode(clearButtonPin, INPUT_PULLUP);
   Serial.begin(9600); // initialize serial communication
 }
 
 void loop() {
   int reading = digitalRead(buttonPin); // read the state of the switch into a local variable
-
   int sendReading = digitalRead(sendButtonPin);
+  int clearReading = digitalRead(clearButtonPin);
 
   // check to see if you just pressed the button
   if (reading != lastButtonState) {
@@ -91,6 +96,17 @@ void loop() {
     }
   }
 
+  if ((millis() - clearLastDebounceTime) > debounceDelay) {
+    if (clearReading != clearButtonState) {
+      clearButtonState = clearReading;
+    }
+
+    if (clearButtonState == LOW) {
+      Serial.println("Clearing saved code");
+      savedCode = "";
+    }
+  }
+
 
 
   // Check for actions based on button state
@@ -118,4 +134,5 @@ void loop() {
   // save the reading. Next time through the loop, it'll be the lastButtonState:
   lastButtonState = reading;
   sendLastButtonState = sendReading;
+  clearLastButtonState = clearReading;
 }
