@@ -12,18 +12,36 @@ bool buttonPressed = false;
 bool buttonReleased = false;
 bool longPressDetected = false;
 
+
+const int sendButtonPin = 10;
+int sendButtonState = HIGH;
+int sendLastButtonState = HIGH;
+unsigned long sendLastDebounceTime = 0;
+
+// if false: mode is to confirm
+// if true: mode is to send
+bool sendMsg = true;
+
+
 void setup() {
   pinMode(buttonPin, INPUT_PULLUP); // set up the button pin as input with internal pull-up resistor
+  pinMode(sendButtonPin, INPUT_PULLUP);
   Serial.begin(9600); // initialize serial communication
 }
 
 void loop() {
   int reading = digitalRead(buttonPin); // read the state of the switch into a local variable
 
+  int sendReading = digitalRead(sendButtonPin);
+
   // check to see if you just pressed the button
   if (reading != lastButtonState) {
     // reset the debouncing timer
     lastDebounceTime = millis();
+  }
+
+  if (sendReading != sendLastButtonState) {
+    sendLastDebounceTime = millis();
   }
 
   if ((millis() - lastDebounceTime) > debounceDelay) {
@@ -42,12 +60,38 @@ void loop() {
       } else {
         buttonReleased = true;
 
-         if ((millis() - pressedTime) > 500) { // Detect long press (1 second)
+         if ((millis() - pressedTime) > 500) { // Detect long press (half second)
           longPressDetected = true;
         }
       }
     }
   }
+
+  if ((millis() - sendLastDebounceTime) > debounceDelay) {
+    if (sendReading != sendButtonState) {
+      sendButtonState = sendReading;
+    
+
+    if (sendButtonState == LOW) {
+      sendMsg = !sendMsg;
+
+      if (!sendMsg) {
+        // confirm msg
+        Serial.print("Do you want to send the message?: ");
+        Serial.println(savedCode);
+        Serial.println("Press the button again to send or press the clear button to restart");
+      } else {
+        // do led, vibromotor thing
+        Serial.print("Relaying message: ");
+        Serial.println(savedCode);
+      }
+
+    }
+
+    }
+  }
+
+
 
   // Check for actions based on button state
   if (buttonPressed) {
@@ -73,4 +117,5 @@ void loop() {
 
   // save the reading. Next time through the loop, it'll be the lastButtonState:
   lastButtonState = reading;
+  sendLastButtonState = sendReading;
 }
