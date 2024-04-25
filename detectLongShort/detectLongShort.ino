@@ -27,10 +27,19 @@ int clearLastButtonState = HIGH;
 unsigned long clearLastDebounceTime = 0;
 
 
+// led
+const int led = 8;
+const int vibromotor = 7;
+const int buzzer = 6;
+
+
 void setup() {
   pinMode(buttonPin, INPUT_PULLUP); // set up the button pin as input with internal pull-up resistor
   pinMode(sendButtonPin, INPUT_PULLUP);
   pinMode(clearButtonPin, INPUT_PULLUP);
+  pinMode(led, OUTPUT);
+  pinMode(vibromotor, OUTPUT);
+  pinMode(buzzer, OUTPUT);
   Serial.begin(9600); // initialize serial communication
 }
 
@@ -89,6 +98,7 @@ void loop() {
         // do led, vibromotor thing
         Serial.print("Relaying message: ");
         Serial.println(savedCode);
+        relaySavedCode();
       }
 
     }
@@ -103,6 +113,7 @@ void loop() {
 
     if (clearButtonState == LOW) {
       Serial.println("Clearing saved code");
+      sendMsg = true;
       savedCode = "";
     }
   }
@@ -135,4 +146,28 @@ void loop() {
   lastButtonState = reading;
   sendLastButtonState = sendReading;
   clearLastButtonState = clearReading;
+}
+
+
+
+void relaySavedCode() {
+
+  for (int i = 0; i < savedCode.length(); i++) {
+    char currChar = savedCode.charAt(i);
+
+    digitalWrite(led, HIGH);
+    digitalWrite(vibromotor, HIGH);
+    tone(buzzer, 85); //Set the voltage to high and makes a noise
+
+    if (currChar == '.') {
+      delay(500);
+    } else {
+      delay (1500);
+    }
+    digitalWrite(led, LOW);
+    digitalWrite(vibromotor, LOW);
+    noTone(buzzer);//Sets the voltage to low and makes no noise
+    delay(500);
+  }
+  
 }
