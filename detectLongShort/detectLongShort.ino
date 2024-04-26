@@ -58,6 +58,10 @@ void loop() {
     sendLastDebounceTime = millis();
   }
 
+  if (clearReading != clearLastButtonState) {
+    clearLastDebounceTime = millis();
+  }
+
   if ((millis() - lastDebounceTime) > debounceDelay) {
     // whatever the reading is at, it's been there for longer than the debounce
     // delay, so take it as the actual current state:
@@ -109,15 +113,17 @@ void loop() {
   if ((millis() - clearLastDebounceTime) > debounceDelay) {
     if (clearReading != clearButtonState) {
       clearButtonState = clearReading;
-    }
+    
 
     if (clearButtonState == LOW) {
       Serial.println("Clearing saved code");
       sendMsg = true;
       savedCode = "";
+      // delay(50);
     }
   }
 
+  }
 
 
   // Check for actions based on button state

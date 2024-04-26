@@ -1,4 +1,4 @@
-int limitSwitch = 11;
+int limitSwitch = 10;
 
 void setup() {
   Serial.begin(9600);
