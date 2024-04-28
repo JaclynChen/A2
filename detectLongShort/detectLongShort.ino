@@ -32,6 +32,53 @@ const int led = 8;
 const int vibromotor = 7;
 const int buzzer = 6;
 
+const char* prompts[5]
+      = { "house", "key", "wifi", "smile", "light" };
+
+bool newGame = true;
+int currGameIndex = 0;
+
+
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+// The pins for I2C are defined by the Wire-library. 
+// On an arduino UNO:       A4(SDA), A5(SCL)
+// On an arduino MEGA 2560: 20(SDA), 21(SCL)
+// On an arduino LEONARDO:   2(SDA),  3(SCL), ...
+#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+#define SCREEN_ADDRESS 0x3D ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+#define NUMFLAKES     10 // Number of snowflakes in the animation example
+
+#define LOGO_HEIGHT   16
+#define LOGO_WIDTH    16
+static const unsigned char PROGMEM logo_bmp[] =
+{ 0b00000000, 0b11000000,
+  0b00000001, 0b11000000,
+  0b00000001, 0b11000000,
+  0b00000011, 0b11100000,
+  0b11110011, 0b11100000,
+  0b11111110, 0b11111000,
+  0b01111110, 0b11111111,
+  0b00110011, 0b10011111,
+  0b00011111, 0b11111100,
+  0b00001101, 0b01110000,
+  0b00011011, 0b10100000,
+  0b00111111, 0b11100000,
+  0b00111111, 0b11110000,
+  0b01111100, 0b11110000,
+  0b01110000, 0b01110000,
+  0b00000000, 0b00110000 };
+
+
 
 void setup() {
   pinMode(buttonPin, INPUT_PULLUP); // set up the button pin as input with internal pull-up resistor
@@ -41,9 +88,46 @@ void setup() {
   pinMode(vibromotor, OUTPUT);
   pinMode(buzzer, OUTPUT);
   Serial.begin(9600); // initialize serial communication
+
+
+  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
+  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Don't proceed, loop forever
+  }
+
+  // Show initial display buffer contents on the screen --
+  // the library initializes this with an Adafruit splash screen.
+  display.display();
+  delay(2000); // Pause for 2 seconds
+
+  // Clear the buffer
+  display.clearDisplay();
 }
 
 void loop() {
+
+  if (newGame) {
+    startNewRound();
+  }
+
+   if (Serial.available() > 0) {
+    String serialData = Serial.readStringUntil('/n');
+    serialData.trim();
+    
+    // Serial.println(serialData);
+    // Serial.println(prompts[currGameIndex]);
+  
+    if (serialData.equals(String(prompts[currGameIndex]))) {
+      Serial.println("Yay! You guessed the word :)");
+      newGame = true;
+    } else {
+      Serial.println("Sorry! That's incorrect :( Try again");
+    }
+  
+  }
+
+
   int reading = digitalRead(buttonPin); // read the state of the switch into a local variable
   int sendReading = digitalRead(sendButtonPin);
   int clearReading = digitalRead(clearButtonPin);
@@ -152,6 +236,49 @@ void loop() {
   lastButtonState = reading;
   sendLastButtonState = sendReading;
   clearLastButtonState = clearReading;
+}
+
+void startNewRound() {
+  // dislay icon
+  displayRandomIcon();
+  newGame = false;
+
+ 
+
+  // prompt for serial feedback
+
+
+}
+
+
+void displayRandomIcon() {
+
+  int16_t x, y;
+  uint16_t textWidth, textHeight;
+  const char strHello[] = "love u too";
+
+  int randomIndex = random(0, sizeof(prompts) / sizeof(prompts[0]));
+  currGameIndex = randomIndex;
+  // Setup text rendering parameters
+  display.setTextSize(1);
+  display.setTextColor(WHITE, BLACK);
+
+  // Measure the text with those parameters. Pass x, y, textWidth, and textHeight
+  // by reference so that they are set within the function itself.
+  display.getTextBounds(strHello, 0, 0, &x, &y, &textWidth, &textHeight);
+
+  // Center the text on the display (both horizontally and vertically)
+  display.setCursor(display.width() / 2 - textWidth / 2, display.height() / 2 - textHeight / 2);
+
+  // Print out the string
+  // display.print(strHello);
+  display.print(prompts[randomIndex]);
+
+  // Show the display buffer on the screen. You MUST call display() after
+  // drawing commands to make them visible on screen!
+  display.display();
+  delay(2000);
+
 }
 
 
